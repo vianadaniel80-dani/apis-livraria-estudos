@@ -1,4 +1,4 @@
-import mongoose, { version } from "mongoose";
+import mongoose from "mongoose";
 import { schemaAutor } from "./Autor.js"
 
 const livroSchema = mongoose.Schema({
