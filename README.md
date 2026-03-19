@@ -15,3 +15,7 @@ server.js # Inicialização do servidor (ponto de entrada)
 
 DB_CONNECTION_STRING=mongodb+srv://admin:[Senha do Banco]@cluster0.5sr9kid.mongodb.net/livraria?retryWrites=true&w=majority
 PORT_SERVER=3000
+
+Listar processos - netstat -ano | findstr :3000
+Matar processo - taskkill /PID 32440 /F
+stop-process -Id (Get-NetTCPConnection -LocalPort 3000).OwningProcess -Force
