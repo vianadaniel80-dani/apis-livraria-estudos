@@ -14,6 +14,13 @@ conexao.once("open", () => {
 });
 
 const app = express();
+
+// app.use((req, res, next) => {
+//   const tempo = Date.now();
+//   console.log("Código de um novo middleware", req.url, tempo);
+//   next();
+// });
+
 routes(app);
 
 app.use(manipuladorDeErros);
