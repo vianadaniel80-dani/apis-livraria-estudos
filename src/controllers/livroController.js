@@ -1,9 +1,12 @@
 import { livros } from "../models/Livro.js";
 import { autor } from "../models/Autor.js";
+import ErroRota404 from "../errors/ErroRota404.js";
 
 class LivroController {
   static buscarLivros = async (req, resp, next) => {
     try {
+      // throw new Error("Erro Simulado de Servidor");
+
       const listaLivros = await livros.find({});
 
       if (!listaLivros) {
@@ -23,9 +26,7 @@ class LivroController {
       const listaLivros = await livros.find({ editora: editora });
 
       if (!listaLivros || listaLivros.length === 0) {
-        resp
-          .status(404)
-          .json({ message: "Nenhum livro encontrado para essa editora" });
+        resp.status(404).json({ message: "Nenhum livro encontrado para essa editora" });
       } else {
         resp.status(200).json(listaLivros);
       }
@@ -41,9 +42,7 @@ class LivroController {
       const listaLivros = await livros.find({ preco: preco });
 
       if (!listaLivros || listaLivros.length === 0) {
-        resp
-          .status(404)
-          .json({ message: "Nenhum livro encontrado com esse preço" });
+        resp.status(404).json({ message: "Nenhum livro encontrado com esse preço" });
       } else {
         resp.status(200).json(listaLivros);
       }
@@ -58,17 +57,22 @@ class LivroController {
 
     // Verificando se o livro é um array ou um objeto e garantindo que seja um array para facilitar o processamento
     const livroCompleto = Array.isArray(novoLivro) ? novoLivro : [novoLivro];
+
     // Verificando se o autor existe para cada livro e criando um novo array de livros completos com os IDs dos autores
     try {
       const livroCompletoComAutor = await Promise.all(
         // Para cada livro, verificamos se o autor existe e, se existir, retornamos um novo objeto de livro com o ID do autor
         livroCompleto.map(async (livro) => {
+          if (!livro.autor) {
+            next(new ErroRota404("O campo 'autor' é obrigatório para cada livro").enviarRespostaErro(resp));
+          }
+
           // Verificando se o autor existe no banco de dados
           const consultaAutor = await autor.findById(livro.autor);
 
           // Se o autor não existir, lançamos um erro para ser tratado pelo manipulador de erros
           if (!consultaAutor) {
-            throw new Error(`Autor com ID ${livro.autor} não encontrado`);
+            next(new ErroRota404("ID do autor não encontrado").enviarRespostaErro(resp));
           } else {
             // Se o autor existir, retornamos um novo objeto de livro com o ID do autor
             return {
@@ -119,13 +123,9 @@ class LivroController {
   static atualizarLivroPorID = async (req, resp, next) => {
     try {
       const livroId = req.params.id;
-      const atualizacaoLivroID = await livros.findByIdAndUpdate(
-        livroId,
-        req.body,
-        {
-          runValidators: true,
-        },
-      );
+      const atualizacaoLivroID = await livros.findByIdAndUpdate(livroId, req.body, {
+        runValidators: true,
+      });
 
       if (!atualizacaoLivroID) {
         resp.status(404).json({ message: "ID do livro não encontrado" });

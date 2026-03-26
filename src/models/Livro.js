@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+// import { autor, schemaAutor } from "./Autor";
 // import { schemaAutor } from "./Autor.js";
 
 const livroSchema = mongoose.Schema(
@@ -23,6 +24,7 @@ const livroSchema = mongoose.Schema(
       ref: "autores",
       required: [true, "O autor do livro deve ser enviado"],
     },
+    // autor: schemaAutor,
   },
   { versionKey: false },
 );

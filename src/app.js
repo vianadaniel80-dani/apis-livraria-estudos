@@ -2,6 +2,7 @@ import express from "express";
 import conexaoMongo from "./config/dbConnect.js";
 import routes from "./routes/index.js";
 import manipuladorDeErros from "./middlewares/manipuladorDeErros.js";
+import manipulador404 from "./middlewares/manipuladorErro404.js";
 
 const conexao = await conexaoMongo();
 
@@ -22,7 +23,7 @@ const app = express();
 // });
 
 routes(app);
-
+app.use(manipulador404);
 app.use(manipuladorDeErros);
 
 export default app;

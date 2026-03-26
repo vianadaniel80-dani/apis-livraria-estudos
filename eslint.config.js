@@ -13,6 +13,7 @@ export default defineConfig([
       quotes: ["error", "double"], // Força aspas duplas
       "no-unused-vars": "warn", // Apenas avisa sobre variáveis não usadas
       //"padded-blocks": ["error", "always"], // Força blocos de código com linhas em branco
+      //"max-len": "off", // <--- Adicione esta linha para parar de exigir quebra de linha
     },
   },
 ]);
