@@ -7,7 +7,7 @@ const schemaAutor = new mongoose.Schema(
       type: String,
       required: [true, "O nome do autor(a) deve ser enviado corretamente"],
     },
-    nacionalidade: { type: String },
+    nacionalidade: { type: String, cast: false },
   },
   { versionKey: false },
 );

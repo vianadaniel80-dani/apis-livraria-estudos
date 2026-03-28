@@ -1,5 +1,4 @@
-import { livros } from "../models/Livro.js";
-import { autor } from "../models/Autor.js";
+import { livros, autor } from "../models/index.js";
 import ErroRota404 from "../errors/ErroRota404.js";
 
 class LivroController {
@@ -10,7 +9,7 @@ class LivroController {
       const listaLivros = await livros.find({});
 
       if (!listaLivros) {
-        resp.status(404).json({ message: "Nenhum livro encontrado" });
+        next(new ErroRota404("Nenhum livro encontrado").enviarRespostaErro(resp));
       } else {
         resp.status(200).json(listaLivros);
       }
@@ -19,30 +18,31 @@ class LivroController {
     }
   };
 
-  static buscarLivrosPorEditora = async (req, resp, next) => {
-    const editora = req.query.editora;
+  static buscarLivrosPorFiltro = async (req, resp, next) => {
+    const { editora, titulo, preco, minPaginas, maxPaginas } = req.query;
+
+    const busca = {};
+
+    if (editora) busca.editora = { $regex: editora, $options: "i" };
+    if (titulo) busca.titulo = { $regex: titulo, $options: "i" };
+    if (preco) busca.preco = preco;
+
+    if (minPaginas || maxPaginas) busca.quantidade_paginas = {};
+
+    if (minPaginas) busca.quantidade_paginas.$gte = minPaginas;
+    if (maxPaginas) busca.quantidade_paginas.$lte = maxPaginas;
+
+    // Deixa pesquisar por valor exato ou por valor maior ou igual, dependendo do formato do preço enviado
+    // if (titulo) busca.titulo = { $gte: preco };
+
+    // Deixa pesquisar por valor exato ou por valor menor ou igual, dependendo do formato do preço enviado
+    // if (titulo) busca.titulo = { $lte: preco };
 
     try {
-      const listaLivros = await livros.find({ editora: editora });
+      const listaLivros = await livros.find(busca);
 
       if (!listaLivros || listaLivros.length === 0) {
-        resp.status(404).json({ message: "Nenhum livro encontrado para essa editora" });
-      } else {
-        resp.status(200).json(listaLivros);
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
-
-  static buscarLivrosPorPreco = async (req, resp, next) => {
-    const preco = req.query.preco;
-
-    try {
-      const listaLivros = await livros.find({ preco: preco });
-
-      if (!listaLivros || listaLivros.length === 0) {
-        resp.status(404).json({ message: "Nenhum livro encontrado com esse preço" });
+        next(new ErroRota404("Nenhum livro encontrado").enviarRespostaErro(resp));
       } else {
         resp.status(200).json(listaLivros);
       }
@@ -96,6 +96,11 @@ class LivroController {
   static deletarLivros = async (req, resp, next) => {
     try {
       const deletarLivros = await livros.deleteMany({});
+
+      if (!deletarLivros) {
+        next(new ErroRota404("Nenhum livro encontrado para deletar").enviarRespostaErro(resp));
+      }
+
       resp.status(200).json({
         message: "Livros deletados com sucesso",
         linhasDeletadas: deletarLivros.deletedCount,
@@ -111,7 +116,7 @@ class LivroController {
       const listaLivrosID = await livros.findById(livroID);
 
       if (!listaLivrosID) {
-        resp.status(404).json({ message: "ID do livro não encontrado" });
+        next(new ErroRota404("ID do autor não encontrado").enviarRespostaErro(resp));
       } else {
         resp.status(200).json(listaLivrosID);
       }
@@ -128,7 +133,7 @@ class LivroController {
       });
 
       if (!atualizacaoLivroID) {
-        resp.status(404).json({ message: "ID do livro não encontrado" });
+        next(new ErroRota404("ID do autor não encontrado").enviarRespostaErro(resp));
       } else {
         resp.status(200).json({ message: "Livro atualizado com sucesso" });
       }
