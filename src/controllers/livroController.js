@@ -1,54 +1,66 @@
 import { livros, autor } from "../models/index.js";
 import ErroRota404 from "../errors/ErroRota404.js";
+// import ErroRequisicaoIncorreta from "../errors/ErroRequisicaoIncorreta.js";
 
 class LivroController {
   static buscarLivros = async (req, resp, next) => {
     try {
       // throw new Error("Erro Simulado de Servidor");
-
-      const listaLivros = await livros.find({});
-
-      if (!listaLivros) {
-        next(new ErroRota404("Nenhum livro encontrado").enviarRespostaErro(resp));
-      } else {
-        resp.status(200).json(listaLivros);
-      }
+      const queryLivro = livros.find({});
+      req.resultadoQuery = queryLivro;
+      next();
     } catch (error) {
       next(error);
     }
   };
 
   static buscarLivrosPorFiltro = async (req, resp, next) => {
-    const { editora, titulo, preco, minPaginas, maxPaginas } = req.query;
+    const busca = await this.processaBusca(req.query);
 
-    const busca = {};
+    if (!busca || Object.keys(busca).length === 0) {
+      resp.status(200).json([]); // Retorna um array vazio se a busca for null (por exemplo, quando o autor não é encontrado)
+      return; // Encerra a execução da função para evitar continuar com a busca no banco de dados
+    }
+
+    try {
+      // const listaLivros = await livros.find(busca).populate("autor");
+
+      req.resultadoQuery = livros.find(busca);
+      next();
+
+      // if (!listaLivros || listaLivros.length === 0) {
+      //   next(new ErroRota404("Nenhum livro encontrado").enviarRespostaErro(resp));
+      // } else {
+      //   resp.status(200).json(listaLivros);
+      // }
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  static processaBusca = async (parametros) => {
+    const { editora, titulo, preco, minPaginas, maxPaginas, nomeAutor } = parametros;
+
+    let busca = {};
 
     if (editora) busca.editora = { $regex: editora, $options: "i" };
     if (titulo) busca.titulo = { $regex: titulo, $options: "i" };
     if (preco) busca.preco = preco;
 
     if (minPaginas || maxPaginas) busca.quantidade_paginas = {};
-
     if (minPaginas) busca.quantidade_paginas.$gte = minPaginas;
     if (maxPaginas) busca.quantidade_paginas.$lte = maxPaginas;
 
-    // Deixa pesquisar por valor exato ou por valor maior ou igual, dependendo do formato do preço enviado
-    // if (titulo) busca.titulo = { $gte: preco };
+    if (nomeAutor) {
+      const autorEncontrado = await autor.findOne({ nome: { $regex: nomeAutor, $options: "i" } });
 
-    // Deixa pesquisar por valor exato ou por valor menor ou igual, dependendo do formato do preço enviado
-    // if (titulo) busca.titulo = { $lte: preco };
-
-    try {
-      const listaLivros = await livros.find(busca);
-
-      if (!listaLivros || listaLivros.length === 0) {
-        next(new ErroRota404("Nenhum livro encontrado").enviarRespostaErro(resp));
+      if (!autorEncontrado) {
+        busca = null; // Se o autor não for encontrado, definimos a busca como null para garantir que nenhum livro seja retornado
       } else {
-        resp.status(200).json(listaLivros);
+        busca.autor = autorEncontrado._id;
       }
-    } catch (error) {
-      next(error);
     }
+    return busca;
   };
 
   static cadastrarLivro = async (req, resp, next) => {
@@ -113,10 +125,10 @@ class LivroController {
   static buscarLivrosPorId = async (req, resp, next) => {
     try {
       const livroID = req.params.id;
-      const listaLivrosID = await livros.findById(livroID);
+      const listaLivrosID = await livros.findById(livroID, {}, { autopopulate: false }).populate("autor", "nome nacionalidade");
 
       if (!listaLivrosID) {
-        next(new ErroRota404("ID do autor não encontrado").enviarRespostaErro(resp));
+        next(new ErroRota404(`Nenhum livro encontrado para o ID - ${livroID}`).enviarRespostaErro(resp));
       } else {
         resp.status(200).json(listaLivrosID);
       }

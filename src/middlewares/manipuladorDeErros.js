@@ -14,6 +14,8 @@ function manipuladorErros(error, req, resp, next) {
     new ErroValidacao(error).enviarRespostaErro(resp);
   } else if (error instanceof ErroRota404) {
     error.enviarRespostaErro(resp);
+  } else if (error instanceof TypeError) {
+    new ErroRequisicaoIncorreta().enviarRespostaErro(resp);
   } else {
     new ErroBase().enviarRespostaErro(resp);
   }

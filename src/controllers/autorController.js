@@ -4,13 +4,8 @@ import ErroRota404 from "../errors/ErroRota404.js";
 class AutorController {
   static listarAutores = async (req, resp, next) => {
     try {
-      const listaAutores = await autor.find({});
-
-      if (!listaAutores || listaAutores.length === 0) {
-        next(new ErroRota404("Nenhum autor encontrado").enviarRespostaErro(resp));
-      }
-
-      resp.status(200).json(listaAutores);
+      req.resultadoQuery = autor.find({});
+      next();
     } catch (error) {
       next(error);
     }
